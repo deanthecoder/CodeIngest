@@ -60,13 +60,13 @@ internal static class Program
     {
         if (string.IsNullOrWhiteSpace(s))
             return false;
+        if (s.StartsWith("using"))
+            return false;
         
         var trimmed = s.Trim();
         if (trimmed.StartsWith("//"))
             return false;
         if (trimmed.StartsWith("namespace"))
-            return false;
-        if (trimmed.StartsWith("using"))
             return false;
         return true;
     }
