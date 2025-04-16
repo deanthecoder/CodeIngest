@@ -25,14 +25,13 @@ internal static class Program
             sourceDirectory
                 .GetFiles("*.cs", SearchOption.AllDirectories)
                 .Where(f => !ShouldSkipFile(f))
-                .ToDictionary(o => o.FullName, o => File.ReadLines(o.FullName).Where(ShouldIncludeSourceLine).Select(s => s.Trim()));
+                .ToDictionary(o => o.FullName, o => File.ReadLines(o.FullName));
         
         // Write header.
         using var fileStream = new FileInfo(args[1]).Open(FileMode.Create);
         using var writer = new StreamWriter(fileStream);
-        writer.WriteLine("// CodeIngest Source Dump - A CLI tool that merges and processes .cs files for GPT reviews.");
+        writer.WriteLine("// CodeIngest Source Dump - A CLI tool that merges and processes code files for GPT reviews.");
         writer.WriteLine("// Notes: Comments, namespaces, and using statements removed to reduce noise.");
-        writer.WriteLine("// Language: C#");
 
         // Combine files into a single output file.
         foreach (var kvp in sourceFiles)
@@ -45,7 +44,12 @@ internal static class Program
 
             var lineNumber = 1;
             foreach (var line in lines)
-                writer.WriteLine($"{lineNumber++.ToString().PadLeft(padWidth)} | {line}");
+            {
+                if (ShouldIncludeSourceLine(line))
+                    writer.WriteLine($"{lineNumber.ToString().PadLeft(padWidth)} | {line.Trim()}");
+
+                lineNumber++;
+            }
         }
         
         // Report summary.
@@ -54,7 +58,7 @@ internal static class Program
     }
 
     private static bool ShouldSkipFile(FileInfo f) =>
-        new[] {"resx", ".g.", ".designer.", "\\obj\\", "/obj/", "\\bin\\", "/bin/", "assemblyinfo.cs" }.Any(o => f.FullName.Contains(o, StringComparison.OrdinalIgnoreCase));
+        new[] {"resx", ".g.", ".designer.", "\\obj\\", "/obj/", "\\bin\\", "/bin/", "assemblyinfo.cs", "/.", "\\." }.Any(o => f.FullName.Contains(o, StringComparison.OrdinalIgnoreCase));
 
     private static bool ShouldIncludeSourceLine(string s)
     {
