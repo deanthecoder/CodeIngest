@@ -28,33 +28,39 @@ internal static class Program
                 .ToDictionary(o => o.FullName, o => File.ReadLines(o.FullName));
         
         // Write header.
-        using var fileStream = new FileInfo(args[1]).Open(FileMode.Create);
-        using var writer = new StreamWriter(fileStream);
-        writer.WriteLine("// CodeIngest Source Dump - A CLI tool that merges and processes code files for GPT reviews.");
-        writer.WriteLine("// Notes: Comments, namespaces, and using statements removed to reduce noise.");
-
-        // Combine files into a single output file.
-        foreach (var kvp in sourceFiles)
+        var outputFile = new FileInfo(args[1]);
+        using (var fileStream = outputFile.Open(FileMode.Create))
+        using (var writer = new StreamWriter(fileStream))
         {
-            var lines = kvp.Value.ToList(); // Force evaluation to count
-            var lineCount = lines.Count;
-            var padWidth = lineCount.ToString().Length;
-
-            writer.WriteLine($"// File: {kvp.Key} ({lineCount:N0} lines)");
-
-            var lineNumber = 1;
-            foreach (var line in lines)
             {
-                if (ShouldIncludeSourceLine(line))
-                    writer.WriteLine($"{lineNumber.ToString().PadLeft(padWidth)} | {line.Trim()}");
+                writer.WriteLine(
+                    "// CodeIngest Source Dump - A CLI tool that merges and processes code files for GPT reviews.");
+                writer.WriteLine("// Notes: Comments, namespaces, and using statements removed to reduce noise.");
 
-                lineNumber++;
+                // Combine files into a single output file.
+                foreach (var kvp in sourceFiles)
+                {
+                    var lines = kvp.Value.ToList(); // Force evaluation to count
+                    var lineCount = lines.Count;
+                    var padWidth = lineCount.ToString().Length;
+
+                    writer.WriteLine($"// File: {kvp.Key} ({lineCount:N0} lines)");
+
+                    var lineNumber = 1;
+                    foreach (var line in lines)
+                    {
+                        if (ShouldIncludeSourceLine(line))
+                            writer.WriteLine($"{lineNumber.ToString().PadLeft(padWidth)} | {line.Trim()}");
+
+                        lineNumber++;
+                    }
+                }
             }
         }
         
         // Report summary.
         Console.WriteLine("CodeIngest completed successfully.");
-        Console.WriteLine($"Processed {sourceFiles.Count:N0} files, producing {fileStream.Length:N0} bytes.");
+        Console.WriteLine($"Processed {sourceFiles.Count:N0} files, producing {outputFile.Length:N0} bytes.");
     }
 
     private static bool ShouldSkipFile(FileInfo f) =>
