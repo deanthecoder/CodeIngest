@@ -1,9 +1,14 @@
-﻿namespace CodeIngest;
+﻿using System.Text;
+
+namespace CodeIngest;
 
 static class Program
 {
     private static void Main(string[] args)
     {
+        var switches = args.Where(o => o.StartsWith('-')).ToArray();
+        var arguments = args.Where(o => !o.StartsWith('-')).ToArray();
+        
         // Getting directory argument from the command line (Report error if none found).
         if (args.Length < 2 || args.Any(a => a is "-h" or "--help" or "/?"))
         {
@@ -11,16 +16,16 @@ static class Program
             return;
         }
 
-        var outputFile = new FileInfo(args[^1]);
+        var outputFile = new FileInfo(arguments[^1]);
         var patterns = new List<string>();
         var directories = new List<DirectoryInfo>();
 
-        for (var i = 0; i < args.Length - 1; i++)
+        for (var i = 0; i < arguments.Length - 1; i++)
         {
-            if (args[i].Contains('*'))
-                patterns.AddRange(args[i].Split(';', StringSplitOptions.RemoveEmptyEntries));
+            if (arguments[i].Contains('*'))
+                patterns.AddRange(arguments[i].Split(';', StringSplitOptions.RemoveEmptyEntries));
             else
-                directories.Add(new DirectoryInfo(args[i]));
+                directories.Add(new DirectoryInfo(arguments[i]));
         }
 
         if (directories.Count == 0)
@@ -28,6 +33,9 @@ static class Program
 
         if (patterns.Count == 0)
             patterns.Add("*.cs");
+        
+        var useFullPaths = switches.Any(o => o is "-full");
+        var verbose = switches.Any(o => o is "-v");
 
         // Recurse directory to find all source files.
         var sourceFiles = directories
@@ -45,7 +53,7 @@ static class Program
                 }
             }))
             .Where(f => !ShouldSkipFile(f))
-            .ToDictionary(o => o.Name, o => File.ReadLines(o.FullName));
+            .ToDictionary(o => o.FullName, o => File.ReadLines(o.FullName));
         
         if (sourceFiles.Count == 0)
         {
@@ -55,29 +63,31 @@ static class Program
 
         // Write header.
         using (var fileStream = outputFile.Open(FileMode.Create))
-        using (var writer = new StreamWriter(fileStream))
+        using (var writer = new StreamWriter(fileStream, Encoding.UTF8))
         {
+            writer.NewLine = "\n";
+            writer.WriteLine("// CodeIngest - A CLI tool that merges and processes code files for GPT reviews.");
+            writer.WriteLine("// Notes: Some code content may have been removed.");
+
+            // Combine files into a single output file.
+            foreach (var kvp in sourceFiles)
             {
-                writer.WriteLine("// CodeIngest Source Dump - A CLI tool that merges and processes code files for GPT reviews.");
-                writer.WriteLine("// Notes: Some code content may have been removed.");
+                var lines = kvp.Value.ToList(); // Force evaluation to count
+                var padWidth = lines.Count.ToString().Length;
 
-                // Combine files into a single output file.
-                foreach (var kvp in sourceFiles)
+                writer.WriteLine($"// File: {(useFullPaths ? kvp.Key : Path.GetFileName(kvp.Key))}");
+
+                var lineNumber = 1;
+                foreach (var line in lines)
                 {
-                    var lines = kvp.Value.ToList(); // Force evaluation to count
-                    var padWidth = lines.Count.ToString().Length;
+                    if (ShouldIncludeSourceLine(line))
+                        writer.WriteLine($"{lineNumber.ToString().PadLeft(padWidth)}|{GetCodeLine(line).Trim()}");
 
-                    writer.WriteLine($"// File: {kvp.Key}");
-
-                    var lineNumber = 1;
-                    foreach (var line in lines)
-                    {
-                        if (ShouldIncludeSourceLine(line))
-                            writer.WriteLine($"{lineNumber.ToString().PadLeft(padWidth)}|{GetCodeLine(line).Trim()}");
-
-                        lineNumber++;
-                    }
+                    lineNumber++;
                 }
+
+                if (verbose)
+                    Console.WriteLine($"{kvp.Key} ({lines.Sum(o => o.Length):N0} charactes -> {lines.Count:N0} lines)");
             }
         }
         
@@ -88,11 +98,21 @@ static class Program
 
     private static void ShowUsage()
     {
-        Console.WriteLine("Usage:");
-        Console.WriteLine("  CodeIngest [<directory> ...] [*.ext1;*.ext2] <output.code>");
+        Console.WriteLine("CodeIngest - A CLI tool that merges and processes code files for GPT reviews.");
+        Console.WriteLine("             https://github.com/deanthecoder/CodeIngest");
         Console.WriteLine();
-        Console.WriteLine("See:");
-        Console.WriteLine("  https://github.com/deanthecoder/CodeIngest");
+        Console.WriteLine("Usage:");
+        Console.WriteLine("  CodeIngest [-h] [-full] [-v] [<directory> ...] [*.ext1;*.ext2] <output.code>");
+        Console.WriteLine();
+        Console.WriteLine("Where:");
+        Console.WriteLine("  -full           Optionally include full path names in the output.");
+        Console.WriteLine("  -h              Show this help message.");
+        Console.WriteLine("  -v              Verbose mode.");
+        Console.WriteLine("  <directory>     One or more directories to search for source files.");
+        Console.WriteLine("                  If not specified, the current working directory will be used.");
+        Console.WriteLine("  *.ext1;...      One or more file extensions to include in the search.");
+        Console.WriteLine("                  If not specified, *.cs will be used by default.");
+        Console.WriteLine("  <output.code>   The output file to write the merged code to.");
         Console.WriteLine();
         Console.WriteLine("Examples:");
         Console.WriteLine("  CodeIngest MyProject Out.cs");
@@ -116,11 +136,13 @@ static class Program
     {
         if (string.IsNullOrWhiteSpace(s))
             return false;
-        if (s.StartsWith("using"))
+        if (s.StartsWith("using") || s.StartsWith("#include") || s.StartsWith("#pragma"))
             return false;
         
         var trimmed = s.Trim();
         if (trimmed.StartsWith("//"))
+            return false;
+        if (trimmed.StartsWith("/*") && trimmed.EndsWith("*/"))
             return false;
         if (trimmed.StartsWith("namespace"))
             return false;
@@ -131,6 +153,15 @@ static class Program
     {
         // Strip all comments.
         var commentIndex = line.IndexOf("//", StringComparison.Ordinal);
-        return commentIndex >= 0 ? line[..commentIndex] : line;
+        if (commentIndex >= 0)
+            line = line[..commentIndex];
+
+        foreach (var expr in new[] {"<", "<=", "=", "==", "=>", ">", "!=", "(", ")", "{", "}", "-", "+", "*", "&", "%", "/", "<<", ">>", ";", ",", "||", "|", ":", "?", "|"})
+            line = line.Replace($"{expr} ", expr).Replace($" {expr}", expr);
+        
+        while (line.Contains("  "))
+            line = line.Replace("  ", " ");
+
+        return line;
     }
 }
