@@ -2,8 +2,10 @@
 
 namespace CodeIngest;
 
-static class Program
+internal static class Program
 {
+    private static string[] SymbolsToCollapse { get; } = new[] {"<", "<=", "=", "==", "=>", ">", "!=", "(", ")", "{", "}", "[", "]", "-", "+", "*", "&", "%", "/", "<<", ">>", ";", ",", "||", "|", ":", "?", "|"};
+
     private static void Main(string[] args)
     {
         var switches = args.Where(o => o.StartsWith('-')).ToArray();
@@ -87,7 +89,7 @@ static class Program
                 }
 
                 if (verbose)
-                    Console.WriteLine($"{kvp.Key} ({lines.Sum(o => o.Length):N0} charactes -> {lines.Count:N0} lines)");
+                    Console.WriteLine($"{kvp.Key} ({lines.Sum(o => o.Length):N0} characters -> {lines.Count:N0} lines)");
             }
         }
         
@@ -156,7 +158,7 @@ static class Program
         if (commentIndex >= 0)
             line = line[..commentIndex];
 
-        foreach (var expr in new[] {"<", "<=", "=", "==", "=>", ">", "!=", "(", ")", "{", "}", "-", "+", "*", "&", "%", "/", "<<", ">>", ";", ",", "||", "|", ":", "?", "|"})
+        foreach (var expr in SymbolsToCollapse)
             line = line.Replace($"{expr} ", expr).Replace($" {expr}", expr);
         
         while (line.Contains("  "))
