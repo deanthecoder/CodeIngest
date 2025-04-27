@@ -8,8 +8,6 @@
 // about your modifications. Your contributions are valued!
 // 
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
-using System;
-using System.IO;
 using System.Threading.Tasks;
 using CodeIngestLib;
 using CSharp.Core.Extensions;
@@ -22,69 +20,103 @@ namespace CodeIngest.Desktop;
 public class MainViewModel : ViewModelBase
 {
     private readonly IDialogService m_dialogService;
-    private FolderTreeRoot m_root = new FolderTreeRoot(new DirectoryInfo(Environment.CurrentDirectory));
+    private FolderTreeRoot m_root = new FolderTreeRoot(Settings.Instance.RootFolder);
 
-    private bool m_isCSharp = true;
-    private bool m_isCppNoHeaders;
-    private bool m_isCppWithHeaders;
-    private bool m_includeMarkdown;
-    private bool m_excludeImports = true;
-    private bool m_useFullPaths;
-    private bool m_excludeComments = true;
+    private bool m_isCSharp = Settings.Instance.IsCSharp;
+    private bool m_isCppNoHeaders = Settings.Instance.IsCppNoHeaders;
+    private bool m_isCppWithHeaders = Settings.Instance.IsCppWithHeaders;
+    private bool m_includeMarkdown = Settings.Instance.IncludeMarkdown;
+    private bool m_excludeImports = Settings.Instance.ExcludeImports;
+    private bool m_useFullPaths = Settings.Instance.UseFullPaths;
+    private bool m_excludeComments = Settings.Instance.ExcludeComments;
 
     public FolderTreeRoot Root
     {
         get => m_root;
-        set => SetField(ref m_root, value);
+        set
+        {
+            if (SetField(ref m_root, value))
+                Settings.Instance.RootFolder = value.Root.Clone();
+        }
     }
 
     public bool IsCSharp
     {
         get => m_isCSharp;
-        set => SetField(ref m_isCSharp, value);
+        set
+        {
+            if (SetField(ref m_isCSharp, value))
+                Settings.Instance.IsCSharp = value;
+        }
     }
 
     public bool IsCppNoHeaders
     {
         get => m_isCppNoHeaders;
-        set => SetField(ref m_isCppNoHeaders, value);
+        set
+        {
+            if (SetField(ref m_isCppNoHeaders, value))
+                Settings.Instance.IsCppNoHeaders = value;
+        }
     }
 
     public bool IsCppWithHeaders
     {
         get => m_isCppWithHeaders;
-        set => SetField(ref m_isCppWithHeaders, value);
+        set
+        {
+            if (SetField(ref m_isCppWithHeaders, value))
+                Settings.Instance.IsCppWithHeaders = value;
+        }
     }
 
     public bool ExcludeImports
     {
         get => m_excludeImports;
-        set => SetField(ref m_excludeImports, value);
+        set
+        {
+            if (SetField(ref m_excludeImports, value))
+                Settings.Instance.ExcludeImports = value;
+        }
     }
 
     public bool ExcludeComments
     {
         get => m_excludeComments;
-        set => SetField(ref m_excludeComments, value);
+        set
+        {
+            if (SetField(ref m_excludeComments, value))
+                Settings.Instance.ExcludeComments = value;
+        }
     }
 
     public bool IncludeMarkdown
     {
         get => m_includeMarkdown;
-        set => SetField(ref m_includeMarkdown, value);
+        set
+        {
+            if (SetField(ref m_includeMarkdown, value))
+                Settings.Instance.IncludeMarkdown = value;
+        }
     }
 
     public bool UseFullPaths
     {
         get => m_useFullPaths;
-        set => SetField(ref m_useFullPaths, value);
+        set
+        {
+            if (SetField(ref m_useFullPaths, value))
+                Settings.Instance.UseFullPaths = value;
+        }
     }
 
     public async Task SelectRoot()
     {
         var rootFolder = await m_dialogService.SelectFolderAsync("Select a folder to scan for code.");
-        if (rootFolder != null)
-            Root = new FolderTreeRoot(rootFolder);
+        if (rootFolder == null)
+            return;
+        
+        Root = new FolderTreeRoot(rootFolder);
     }
 
     public MainViewModel(IDialogService dialogService = null)
@@ -142,6 +174,6 @@ public class MainViewModel : ViewModelBase
             return;
         }
         
-        m_dialogService.ShowMessage("Code file generated successfully.", $@"{result.Value.FileCount:N0} files produced {result.Value.OutputBytes.ToSize()} of output.");
+        m_dialogService.ShowMessage("Code file generated successfully.", $"{result.Value.FileCount:N0} files produced {result.Value.OutputBytes.ToSize()} of output.");
     }
 }

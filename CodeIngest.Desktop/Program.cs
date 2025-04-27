@@ -28,7 +28,7 @@ internal static class Program
         }
         finally
         {
-            // todo Settings.Instance.Save();
+            Settings.Instance.Save();
         }
     }
 

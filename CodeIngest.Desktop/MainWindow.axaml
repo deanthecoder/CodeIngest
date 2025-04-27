@@ -58,13 +58,13 @@
                             <CheckBox Content="Export Full Paths" IsChecked="{Binding UseFullPaths}"/>
 
                             <RadioButton Content="C#" Margin="0,16,0,0" IsChecked="{Binding IsCSharp}"/>
-                            <RadioButton Content="C/C++ (No Headers)" IsChecked="{Binding IsCppNoHeaders}" />
+                            <RadioButton Content="C/C++ (No Headers)" IsChecked="{Binding IsCppNoHeaders}" Margin="0,4"/>
                             <RadioButton Content="C/C++ (With Headers)" IsChecked="{Binding IsCppWithHeaders}" />
 
                             <CheckBox Content="Exclude Imports" Margin="0,16,0,0"
                                       ToolTip.Tip="Remove using/#include/etc statements from the output."
                                       IsChecked="{Binding ExcludeImports}" />
-                            <CheckBox Content="Exclude comments"
+                            <CheckBox Content="Exclude comments" Margin="0,4"
                                       ToolTip.Tip="Remove // and /*-style comments from the output."
                                       IsChecked="{Binding ExcludeComments}" />
                             <CheckBox Content="Include Markdown"
