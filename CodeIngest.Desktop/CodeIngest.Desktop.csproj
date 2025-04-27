@@ -7,6 +7,9 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <Company>Dean Edis (DeanTheCoder)</Company>
+        <ApplicationIcon>Assets/app.ico</ApplicationIcon>
+        <AssemblyName>CodeIngest</AssemblyName>
+        <ApplicationTitle>Code Ingest</ApplicationTitle>
     </PropertyGroup>
 
     <ItemGroup>
@@ -25,5 +28,20 @@
     <ItemGroup>
       <ProjectReference Include="..\CodeIngestLib\CodeIngestLib.csproj" />
       <ProjectReference Include="..\DTC.Core\CSharp.Core\CSharp.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <AvaloniaResource Include="Assets\app.ico" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Update="Views\App.axaml.cs">
+            <DependentUpon>App.axaml</DependentUpon>
+            <SubType>Code</SubType>
+        </Compile>
+      <Compile Update="Views\MainWindow.axaml.cs">
+        <DependentUpon>MainWindow.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
     </ItemGroup>
 </Project>

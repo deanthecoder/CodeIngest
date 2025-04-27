@@ -11,12 +11,18 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using CodeIngest.Desktop.Views;
 using CSharp.Core.UI;
 
 namespace CodeIngest.Desktop;
 
 public class App : Application
 {
+    public App()
+    {
+        DataContext = new AppViewModel();
+    }
+
     public override void Initialize() =>
         AvaloniaXamlLoader.Load(this);
 
