@@ -10,7 +10,6 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using CodeIngestLib;
 using CSharp.Core.Extensions;
@@ -20,21 +19,11 @@ using Material.Icons;
 
 namespace CodeIngest.Desktop;
 
-public class SelectedFoldersProvider : ISelectedItemsProvider<DirectoryInfo>
-{
-    private DirectoryInfo[] m_selectedItems;
-
-    public void SetSelectedItems(DirectoryInfo[] items) =>
-        m_selectedItems = items;
-
-    public DirectoryInfo[] GetSelectedItems() =>
-        m_selectedItems ?? [];
-}
-
 public class MainViewModel : ViewModelBase
 {
     private readonly IDialogService m_dialogService;
-    private DirectoryInfo m_driveRoot = new DirectoryInfo(Environment.CurrentDirectory);
+    private FolderTreeRoot m_root = new FolderTreeRoot(new DirectoryInfo(Environment.CurrentDirectory));
+
     private bool m_isCSharp = true;
     private bool m_isCppNoHeaders;
     private bool m_isCppWithHeaders;
@@ -43,13 +32,11 @@ public class MainViewModel : ViewModelBase
     private bool m_useFullPaths;
     private bool m_excludeComments = true;
 
-    public DirectoryInfo DriveRoot
+    public FolderTreeRoot Root
     {
-        get => m_driveRoot;
-        set => SetField(ref m_driveRoot, value);
+        get => m_root;
+        set => SetField(ref m_root, value);
     }
-    
-    public SelectedFoldersProvider SelectedFolders { get; } = new SelectedFoldersProvider();
 
     public bool IsCSharp
     {
@@ -97,7 +84,7 @@ public class MainViewModel : ViewModelBase
     {
         var rootFolder = await m_dialogService.SelectFolderAsync("Select a folder to scan for code.");
         if (rootFolder != null)
-            DriveRoot = rootFolder;
+            Root = new FolderTreeRoot(rootFolder);
     }
 
     public MainViewModel(IDialogService dialogService = null)
@@ -107,8 +94,8 @@ public class MainViewModel : ViewModelBase
 
     public async Task RunIngest()
     {
-        var selectedFolders = SelectedFolders?.GetSelectedItems();
-        if (selectedFolders?.Any() != true)
+        var selectedFolders = Root.GetSelectedItems();
+        if (selectedFolders.Length == 0)
             return; // Nothing to do.
 
         string[] filterExtensions;
