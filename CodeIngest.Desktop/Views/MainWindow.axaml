@@ -10,7 +10,8 @@
         x:Class="CodeIngest.Desktop.Views.MainWindow"
         x:DataType="viewModels:MainViewModel"
         Title="Code Ingest"
-        MinWidth="640" MinHeight="480"
+        Width="860" Height="600"
+        MinWidth="580" MinHeight="500"
         Icon="/Assets/app.ico">
     <Design.DataContext>
         <viewModels:MainViewModel />
@@ -37,21 +38,16 @@
                 <ui:FolderTree Root="{Binding Root}" Margin="8" />
             </Border>
             
-            <StackPanel Grid.Column="1" Margin="0,8,8,8">
+            <Grid Grid.Column="1" Margin="0,8,8,8"
+                  RowDefinitions="Auto,Auto,*">
                 <Button Command="{Binding SelectRoot}">
                     <StackPanel Orientation="Horizontal">
                         <avalonia:MaterialIcon Kind="FolderOutline" />
                         <TextBlock Text="Select Root" Margin="8,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
-                <Button Command="{Binding RunIngest}" Margin="0,4,0,0">
-                    <StackPanel Orientation="Horizontal">
-                        <avalonia:MaterialIcon Kind="Export" />
-                        <TextBlock Text="Ingest" Margin="8,0,0,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
 
-                <Border BorderThickness="1" Margin="0,16,0,0">
+                <Border Grid.Row="1" BorderThickness="1" Margin="0,16,0,0">
                     <StackPanel>
                         <!-- ReSharper disable once Xaml.StyleClassNotFound -->
                         <TextBlock Text="Options" Classes="Overline" Margin="4"/>
@@ -74,7 +70,14 @@
                         </StackPanel>
                     </StackPanel>
                 </Border>
-            </StackPanel>
+
+                <Button Grid.Row="2" Command="{Binding RunIngest}" VerticalAlignment="Bottom">
+                    <StackPanel Orientation="Horizontal">
+                        <avalonia:MaterialIcon Kind="Export" />
+                        <TextBlock Text="Ingest" Margin="8,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </Grid>
         </Grid>
     </dialogHostAvalonia:DialogHost>
 </Window>
