@@ -8,7 +8,12 @@
 // about your modifications. Your contributions are valued!
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
+using System.Linq;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Platform.Storage;
+using CSharp.Core.Extensions;
+using CSharp.Core.UI;
 
 namespace CodeIngest.Desktop;
 
@@ -17,5 +22,16 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+
+        AddHandler(DragDrop.DropEvent, OnDrop);
+    }
+
+    private void OnDrop(object sender, DragEventArgs e)
+    {
+        if (e.Data.GetFiles()?.FirstOrDefault() is not IStorageFolder folder)
+            return;
+        if (DataContext == null)
+            return;
+        ((MainViewModel)DataContext).Root = new FolderTreeRoot(folder.ToDirectoryInfo());
     }
 }

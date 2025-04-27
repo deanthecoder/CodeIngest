@@ -32,8 +32,8 @@
                 </Style>
             </Grid.Styles>
             
-            <Border BorderThickness="1" Margin="8">
-                <ui:FolderTree Root="{Binding Root}" Margin="8"/>
+            <Border BorderThickness="1" Margin="8" DragDrop.AllowDrop="True">
+                <ui:FolderTree Root="{Binding Root}" Margin="8" />
             </Border>
             
             <StackPanel Grid.Column="1" Margin="0,8,8,8">
