@@ -6,4 +6,8 @@
         <Company>Dean Edis (DeanTheCoder)</Company>
     </PropertyGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\DTC.Core\CSharp.Core\CSharp.Core.csproj" />
+    </ItemGroup>
+
 </Project>

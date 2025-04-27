@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using CSharp.Core;
 
 namespace CodeIngestLib;
 
@@ -44,7 +45,7 @@ public class Ingester
                 catch (Exception ex)
                 {
                     didError = true;
-                    Console.WriteLine($"Warning: Failed to read directory {d.FullName}: {ex.Message}");
+                    Logger.Instance.Error($"Failed to read directory {d.FullName}: {ex.Message}");
                     return [];
                 }
             }))
@@ -53,13 +54,13 @@ public class Ingester
 
         if (didError)
         {
-            Console.WriteLine("Error collecting files.");
+            Logger.Instance.Error("Error collecting files.");
             return null;
         }
         
         if (sourceFiles.Count == 0)
         {
-            Console.WriteLine("No matching files found. Check your filters or directory paths.");
+            Logger.Instance.Warn("No matching files found. Check your filters or directory paths.");
             return (0, 0);
         }
 
@@ -87,7 +88,7 @@ public class Ingester
                 }
 
                 if (m_options.Verbose)
-                    Console.WriteLine($"{kvp.Key} ({lines.Sum(o => o.Length):N0} characters -> {lines.Count:N0} lines)");
+                    Logger.Instance.Warn($"{kvp.Key} ({lines.Sum(o => o.Length):N0} characters -> {lines.Count:N0} lines)");
             }
         }
 
