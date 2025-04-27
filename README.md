@@ -8,9 +8,9 @@
 - Command-line and UI variants.
 - Strips comments, `using` directives, and `namespace` blocks
 - Outputs a single readable output file with the following features:
- -File headers
- -Line numbers
- -Cleaned source code
+  - File headers
+  - Line numbers
+  - Cleaned source code
 - Skips generated and irrelevant files (e.g. `.designer.cs`, `bin`, `obj`, `.resx`, etc.)
 
 ## Command Line Usage
@@ -32,12 +32,12 @@ CodeIngest *.cs;*.cpp SourceDump.code
 // File: GameState.cs
 20|public class GameState:IAiGameState
 21|{
-22|private readonly Vector2[] m_bats;
+22|private readonly Vector2[]m_bats;
 23|private readonly Vector2 m_ballPosition;
 24|private readonly Vector2 m_ballVelocity;
 25|private readonly int m_arenaWidth;
 26|private readonly int m_arenaHeight;
-28|public GameState(Vector2[] bats,Vector2 ballPosition,Vector2 ballVelocity,int arenaWidth,int arenaHeight)
+28|public GameState(Vector2[]bats,Vector2 ballPosition,Vector2 ballVelocity,int arenaWidth,int arenaHeight)
 29|{
 30|m_bats=bats;
 31|m_ballPosition=ballPosition;
@@ -45,7 +45,7 @@ CodeIngest *.cs;*.cpp SourceDump.code
 33|m_arenaWidth=arenaWidth;
 34|m_arenaHeight=arenaHeight;
 35|}
-37|public double[] ToInputVector()
+37|public double[]ToInputVector()
 38|{
 39|var inputVector=new double[Brain.BrainInputCount];
 42|inputVector[0]=m_bats[0].Y/m_arenaHeight*2.0f-1.0f;
