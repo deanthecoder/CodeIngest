@@ -1,0 +1,22 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:dialogHostAvalonia="clr-namespace:DialogHostAvalonia;assembly=DialogHost.Avalonia"
+             xmlns:themes="clr-namespace:Material.Styles.Themes;assembly=Material.Styles"
+             xmlns:avalonia="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             x:Class="CodeIngest.Desktop.App"
+             RequestedThemeVariant="Default">
+             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+    <Application.Styles>
+        <FluentTheme />
+        <themes:MaterialTheme BaseTheme="Dark" PrimaryColor="BlueGrey" SecondaryColor="Lime" />
+        <avalonia:MaterialIconStyles />
+        <dialogHostAvalonia:DialogHostStyles />
+
+        <Style Selector="Button">
+            <Setter Property="Focusable" Value="False" />
+        </Style>
+        <Style Selector="ToggleButton">
+            <Setter Property="Focusable" Value="False" />
+        </Style>
+    </Application.Styles>
+</Application>

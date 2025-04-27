@@ -1,22 +1,21 @@
 // Code authored by Dean Edis (DeanTheCoder).
 // Anyone is free to copy, modify, use, compile, or distribute this software,
 // either in source code form or as a compiled binary, for any non-commercial
-//  purpose.
-// 
+// purpose.
+//
 // If you modify the code, please retain this copyright header,
 // and consider contributing back to the repository or letting us know
 // about your modifications. Your contributions are valued!
-// 
+//
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
-using System.Collections.Generic;
+using Avalonia.Controls;
 
-namespace CodeIngestLib;
+namespace CodeIngest.Desktop;
 
-public class IngestOptions
+public partial class MainWindow : Window
 {
-    public List<string> FilePatterns { get; } = ["*.cs"];
-    public bool UseFullPaths { get; set; }
-    public bool Verbose { get; set; }
-    public bool ExcludeImports { get; set; } = true;
-    public bool StripComments { get; set; } = true;
+    public MainWindow()
+    {
+        InitializeComponent();
+    }
 }

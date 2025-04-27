@@ -8,22 +8,34 @@
 // about your modifications. Your contributions are valued!
 // 
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text;
 
-namespace CodeIngestCmd;
+namespace CodeIngestLib;
 
-internal class Ingester
+public class Ingester
 {
+    private readonly IngestOptions m_options;
+
     private static string[] SymbolsToCollapse { get; } = new[]
     {
         "<", "<=", "=", "==", "=>", ">", "!=", "(", ")", "{", "}", "[", "]", "-", "+", "*", "&", "%", "/", "<<", ">>", ";", ",", "||", "|", ":", "?", "|"
     };
-
-    public void Ingest(IngestOptions options)
+    
+    public Ingester(IngestOptions options)
     {
-        var sourceFiles = options.Directories
+        m_options = options;
+    }
+
+    public (int FileCount, long OutputBytes)? Run(IEnumerable<DirectoryInfo> directories, FileInfo outputFile)
+    {
+        var didError = false;
+        var sourceFiles = directories
             .Where(d => d.Exists)
-            .SelectMany(d => options.Patterns.SelectMany(p =>
+            .SelectMany(d => m_options.FilePatterns.SelectMany(p =>
             {
                 try
                 {
@@ -31,20 +43,27 @@ internal class Ingester
                 }
                 catch (Exception ex)
                 {
+                    didError = true;
                     Console.WriteLine($"Warning: Failed to read directory {d.FullName}: {ex.Message}");
-                    return Array.Empty<FileInfo>();
+                    return [];
                 }
             }))
             .Where(f => !ShouldSkipFile(f))
             .ToDictionary(o => o.FullName, o => File.ReadLines(o.FullName));
 
+        if (didError)
+        {
+            Console.WriteLine("Error collecting files.");
+            return null;
+        }
+        
         if (sourceFiles.Count == 0)
         {
             Console.WriteLine("No matching files found. Check your filters or directory paths.");
-            return;
+            return (0, 0);
         }
 
-        using (var fileStream = options.OutputFile.Open(FileMode.Create))
+        using (var fileStream = outputFile.Open(FileMode.Create))
         using (var writer = new StreamWriter(fileStream, Encoding.UTF8))
         {
             writer.NewLine = "\n";
@@ -56,24 +75,23 @@ internal class Ingester
                 var lines = kvp.Value.ToList();
                 var padWidth = lines.Count.ToString().Length;
 
-                writer.WriteLine($"// File: {(options.UseFullPaths ? kvp.Key : Path.GetFileName(kvp.Key))}");
+                writer.WriteLine($"// File: {(m_options.UseFullPaths ? kvp.Key : Path.GetFileName(kvp.Key))}");
 
                 var lineNumber = 1;
                 foreach (var line in lines)
                 {
-                    if (ShouldIncludeSourceLine(line))
+                    if (ShouldIncludeSourceLine(line, m_options))
                         writer.WriteLine($"{lineNumber.ToString().PadLeft(padWidth)}|{GetCodeLine(line).Trim()}");
 
                     lineNumber++;
                 }
 
-                if (options.Verbose)
+                if (m_options.Verbose)
                     Console.WriteLine($"{kvp.Key} ({lines.Sum(o => o.Length):N0} characters -> {lines.Count:N0} lines)");
             }
         }
 
-        Console.WriteLine("CodeIngest completed successfully.");
-        Console.WriteLine($"Processed {sourceFiles.Count:N0} files, producing {options.OutputFile.Length:N0} bytes.");
+        return (sourceFiles.Count, outputFile.Length);
     }
 
     private static bool ShouldSkipFile(FileInfo f) =>
@@ -82,20 +100,23 @@ internal class Ingester
             "resx", ".g.", ".designer.", "\\obj\\", "/obj/", "\\bin\\", "/bin/", "assemblyinfo.cs", "/.", "\\."
         }.Any(o => f.FullName.Contains(o, StringComparison.OrdinalIgnoreCase));
 
-    private static bool ShouldIncludeSourceLine(string s)
+    private static bool ShouldIncludeSourceLine(string s, IngestOptions options)
     {
         if (string.IsNullOrWhiteSpace(s))
             return false;
-        if (s.StartsWith("using") || s.StartsWith("#include") || s.StartsWith("#pragma"))
+        var trimmed = s.Trim();
+
+        if (options.ExcludeImports && s.StartsWith("using") || s.StartsWith("#include") || s.StartsWith("#pragma") || trimmed.StartsWith("namespace"))
             return false;
 
-        var trimmed = s.Trim();
-        if (trimmed.StartsWith("//"))
-            return false;
-        if (trimmed.StartsWith("/*") && trimmed.EndsWith("*/"))
-            return false;
-        if (trimmed.StartsWith("namespace"))
-            return false;
+        if (options.StripComments)
+        {
+            if (trimmed.StartsWith("//"))
+                return false;
+            if (trimmed.StartsWith("/*") && trimmed.EndsWith("*/"))
+                return false;
+        }
+        
         return true;
     }
 
