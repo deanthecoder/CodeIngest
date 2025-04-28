@@ -8,6 +8,7 @@
 // about your modifications. Your contributions are valued!
 // 
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
+using System.Linq;
 using System.Threading.Tasks;
 using CodeIngestLib;
 using CSharp.Core.Extensions;
@@ -126,7 +127,7 @@ public class MainViewModel : ViewModelBase
 
     public async Task RunIngest()
     {
-        var selectedFolders = Root.GetSelectedItems();
+        var selectedFolders = Root.GetSelectedItems().ToArray();
         if (selectedFolders.Length == 0)
             return; // Nothing to do.
 
