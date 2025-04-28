@@ -139,7 +139,7 @@ public class MainViewModel : ViewModelBase
         else
             filterExtensions = [".cs"];
         
-        var nameSuggestion = selectedFolders[0].Name;
+        var nameSuggestion = selectedFolders[0].Name + "_Ingested";
         var outputFile = await m_dialogService.ShowFileSaveAsync("Save output file as...", nameSuggestion, "Code File", filterExtensions);
         if (outputFile == null)
             return; // User cancelled.
