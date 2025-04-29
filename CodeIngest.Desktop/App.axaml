@@ -20,6 +20,10 @@
         <Style Selector="ToggleButton">
             <Setter Property="Focusable" Value="False" />
         </Style>
+        <Style Selector="dialogHostAvalonia|DialogHost">
+            <Setter Property="OverlayBackground" Value="Black"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
     </Application.Styles>
 
     <NativeMenu.Menu>

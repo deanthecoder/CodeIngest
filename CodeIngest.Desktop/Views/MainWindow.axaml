@@ -17,7 +17,7 @@
         <viewModels:MainViewModel />
     </Design.DataContext>
 
-    <dialogHostAvalonia:DialogHost OverlayBackground="Black">
+    <dialogHostAvalonia:DialogHost>
         <Grid ColumnDefinitions="*,Auto">
             <Grid.Styles>
                 <Style Selector="Border">
