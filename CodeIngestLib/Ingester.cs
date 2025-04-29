@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using CSharp.Core;
 
 namespace CodeIngestLib;
@@ -79,9 +80,9 @@ public class Ingester
                 {
                     if (progress.CancelRequested)
                         break; // Caller requested cancellation.
-                    progress.Progress = (i + 1.0) / sourceFiles.Length; 
+                    progress.Progress = (int)(100.0 * (i + 1.0) / sourceFiles.Length); 
                 }
-
+                
                 using var reader = new StreamReader(sourceFile.OpenRead(), Encoding.UTF8);
 
                 writer.WriteLine($"// File: {(m_options.UseFullPaths ? sourceFile.FullName : sourceFile.Name)}");

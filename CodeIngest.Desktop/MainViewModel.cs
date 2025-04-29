@@ -9,7 +9,6 @@
 // 
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
-using System;
 using System.Linq;
 using System.Threading.Tasks;
 using CodeIngestLib;
@@ -170,11 +169,13 @@ public class MainViewModel : ViewModelBase
         if (IncludeMarkdown)
             options.FilePatterns.Add("*.md");
 
-        var progress = new ProgressToken();
-        progress.ProgressUpdated += (_, _) => Console.Write('.');
-        
-        var ingester = new Ingester(options);
-        var result = ingester.Run(selectedFolders, outputFile, progress);
+        var progress = new ProgressToken(true) { IsCancelSupported = true };
+        (int FileCount, long OutputBytes)? result;
+        using (m_dialogService.ShowBusy("Generating code...", progress))
+        {
+            var ingester = new Ingester(options);
+            result = await Task.Run(() => ingester.Run(selectedFolders, outputFile, progress));
+        }
         if (!result.HasValue)
         {
             m_dialogService.ShowMessage("Failed to generate code file.", "Please check your file permissions and try again.", MaterialIconKind.Error);
