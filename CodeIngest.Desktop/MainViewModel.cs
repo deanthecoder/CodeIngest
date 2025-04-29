@@ -8,9 +8,12 @@
 // about your modifications. Your contributions are valued!
 // 
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
+
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using CodeIngestLib;
+using CSharp.Core;
 using CSharp.Core.Extensions;
 using CSharp.Core.UI;
 using CSharp.Core.ViewModels;
@@ -166,9 +169,12 @@ public class MainViewModel : ViewModelBase
         
         if (IncludeMarkdown)
             options.FilePatterns.Add("*.md");
+
+        var progress = new ProgressToken();
+        progress.ProgressUpdated += (_, _) => Console.Write('.');
         
         var ingester = new Ingester(options);
-        var result = ingester.Run(selectedFolders, outputFile);
+        var result = ingester.Run(selectedFolders, outputFile, progress);
         if (!result.HasValue)
         {
             m_dialogService.ShowMessage("Failed to generate code file.", "Please check your file permissions and try again.", MaterialIconKind.Error);

@@ -31,11 +31,12 @@ public class Ingester
         m_options = options;
     }
 
-    public (int FileCount, long OutputBytes)? Run(IEnumerable<DirectoryInfo> directories, FileInfo outputFile)
+    public (int FileCount, long OutputBytes)? Run(IEnumerable<DirectoryInfo> directories, FileInfo outputFile, ProgressToken progress = null)
     {
         var didError = false;
         var sourceFiles = directories
             .Where(d => d.Exists)
+            .AsParallel()
             .SelectMany(d => m_options.FilePatterns.SelectMany(p =>
             {
                 try
@@ -50,7 +51,7 @@ public class Ingester
                 }
             }))
             .Where(f => !ShouldSkipFile(f))
-            .ToDictionary(o => o.FullName, o => File.ReadLines(o.FullName));
+            .ToArray();
 
         if (didError)
         {
@@ -58,7 +59,7 @@ public class Ingester
             return null;
         }
         
-        if (sourceFiles.Count == 0)
+        if (sourceFiles.Length == 0)
         {
             Logger.Instance.Warn("No matching files found. Check your filters or directory paths.");
             return (0, 0);
@@ -71,28 +72,36 @@ public class Ingester
             writer.WriteLine("// CodeIngest - A CLI tool that merges and processes code files for GPT reviews.");
             writer.WriteLine("// Notes: Some code content may have been removed.");
 
-            foreach (var kvp in sourceFiles)
+            for (var i = 0; i < sourceFiles.Length; i++)
             {
-                var lines = kvp.Value.ToList();
-                var padWidth = lines.Count.ToString().Length;
+                var sourceFile = sourceFiles[i];
+                if (progress != null)
+                {
+                    if (progress.CancelRequested)
+                        break; // Caller requested cancellation.
+                    progress.Progress = (i + 1.0) / sourceFiles.Length; 
+                }
 
-                writer.WriteLine($"// File: {(m_options.UseFullPaths ? kvp.Key : Path.GetFileName(kvp.Key))}");
+                using var reader = new StreamReader(sourceFile.OpenRead(), Encoding.UTF8);
+
+                writer.WriteLine($"// File: {(m_options.UseFullPaths ? sourceFile.FullName : sourceFile.Name)}");
 
                 var lineNumber = 1;
-                foreach (var line in lines)
+                string line;
+                while ((line = reader.ReadLine()) != null)
                 {
                     if (ShouldIncludeSourceLine(line, m_options))
-                        writer.WriteLine($"{lineNumber.ToString().PadLeft(padWidth)}|{GetCodeLine(line).Trim()}");
+                        writer.WriteLine($"{lineNumber.ToString()}|{GetCodeLine(line).Trim()}");
 
                     lineNumber++;
                 }
 
                 if (m_options.Verbose)
-                    Logger.Instance.Warn($"{kvp.Key} ({lines.Sum(o => o.Length):N0} characters -> {lines.Count:N0} lines)");
+                    Logger.Instance.Warn($"{sourceFile.FullName} processed ({lineNumber - 1:N0} lines)");
             }
         }
 
-        return (sourceFiles.Count, outputFile.Length);
+        return (sourceFiles.Length, outputFile.Length);
     }
 
     private static bool ShouldSkipFile(FileInfo f) =>
