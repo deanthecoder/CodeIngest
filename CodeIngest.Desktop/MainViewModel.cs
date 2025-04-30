@@ -151,8 +151,14 @@ public class MainViewModel : ViewModelBase
     public long? PreviewFileSize
     {
         get => m_previewFileSize;
-        set => SetField(ref m_previewFileSize, value);
+        set
+        {
+            if (SetField(ref m_previewFileSize, value))
+                OnPropertyChanged(nameof(PreviewTokenCount));
+        }
     }
+
+    public int PreviewTokenCount => (int)((PreviewFileSize ?? 0) / 3.8);
 
     public bool IsGeneratingPreview
     {
@@ -243,47 +249,51 @@ public class MainViewModel : ViewModelBase
     private void OnFolderSelectionChanged(object sender, EventArgs e) =>
         InvalidatePreviewStats();
 
-    private void InvalidatePreviewStats() =>
+    private void InvalidatePreviewStats()
+    {
+        IsGeneratingPreview = true;
+        PreviewFileCount = null;
+        PreviewFileSize = null;
         m_folderSelectionConsolidator.Invoke();
+    }
 
     private void RefreshPredictedSize()
     {
-        m_backgroundRefreshProgress?.Cancel();
-        
-        var selectedFolders = Root.GetSelectedItems().ToArray();
-        if (selectedFolders.Length == 0)
+        try
         {
-            PreviewFileCount = 0;
-            PreviewFileSize = 0;
-            return; // Nothing to do.
-        }
+            m_backgroundRefreshProgress?.Cancel();
         
-        var options = GetIngestOptions();
-        if (options.FilePatterns.Count == 0)
-        {
-            PreviewFileCount = 0;
-            PreviewFileSize = 0;
-            return; // Nothing search.
-        }
+            var selectedFolders = Root.GetSelectedItems().ToArray();
+            if (selectedFolders.Length == 0)
+            {
+                PreviewFileCount = 0;
+                PreviewFileSize = 0;
+                return; // Nothing to do.
+            }
         
-        var ingester = new Ingester(options);
-        m_backgroundRefreshProgress = new ProgressToken(true);
+            var options = GetIngestOptions();
+            if (options.FilePatterns.Count == 0)
+            {
+                PreviewFileCount = 0;
+                PreviewFileSize = 0;
+                return; // Nothing search.
+            }
         
-        Task.Run(() =>
-        {
-            IsGeneratingPreview = true;
-            try
+            var ingester = new Ingester(options);
+            m_backgroundRefreshProgress = new ProgressToken(isCancelSupported: true);
+        
+            Task.Run(() =>
             {
                 var result = ingester.Run(selectedFolders, progress: m_backgroundRefreshProgress);
                 if (!result.HasValue || m_backgroundRefreshProgress.CancelRequested)
                     return;
                 PreviewFileCount = result.Value.FileCount;
                 PreviewFileSize = result.Value.OutputBytes;
-            }
-            finally
-            {
-                IsGeneratingPreview = false;
-            }
-        });
+            });
+        }
+        finally
+        {
+            IsGeneratingPreview = false;
+        }
     }
 }
