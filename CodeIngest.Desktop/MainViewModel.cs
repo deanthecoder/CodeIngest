@@ -9,6 +9,7 @@
 // 
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using CodeIngestLib;
@@ -23,8 +24,9 @@ namespace CodeIngest.Desktop;
 public class MainViewModel : ViewModelBase
 {
     private readonly IDialogService m_dialogService;
-    private FolderTreeRoot m_root = new FolderTreeRoot(Settings.Instance.RootFolder);
-
+    private readonly ActionConsolidator m_folderSelectionConsolidator;
+    private FolderTreeRoot m_root;
+    private ProgressToken m_backgroundRefreshProgress;
     private bool m_isCSharp = Settings.Instance.IsCSharp;
     private bool m_isCppNoHeaders = Settings.Instance.IsCppNoHeaders;
     private bool m_isCppWithHeaders = Settings.Instance.IsCppWithHeaders;
@@ -32,24 +34,33 @@ public class MainViewModel : ViewModelBase
     private bool m_excludeImports = Settings.Instance.ExcludeImports;
     private bool m_useFullPaths = Settings.Instance.UseFullPaths;
     private bool m_excludeComments = Settings.Instance.ExcludeComments;
+    private int? m_previewFileCount;
+    private long? m_previewFileSize;
+    private bool m_isGeneratingPreview;
 
     public FolderTreeRoot Root
     {
         get => m_root;
         set
         {
-            if (SetField(ref m_root, value))
-                Settings.Instance.RootFolder = value.Root.Clone();
+            if (!SetField(ref m_root, value) || value == null)
+                return;
+            Settings.Instance.RootFolder = m_root.Root.Clone();
+            m_root.SelectionChanged += OnFolderSelectionChanged;
+            InvalidatePreviewStats();
         }
     }
-
+    
     public bool IsCSharp
     {
         get => m_isCSharp;
         set
         {
             if (SetField(ref m_isCSharp, value))
+            {
                 Settings.Instance.IsCSharp = value;
+                InvalidatePreviewStats();
+            }
         }
     }
 
@@ -59,7 +70,10 @@ public class MainViewModel : ViewModelBase
         set
         {
             if (SetField(ref m_isCppNoHeaders, value))
+            {
                 Settings.Instance.IsCppNoHeaders = value;
+                InvalidatePreviewStats();
+            }
         }
     }
 
@@ -69,7 +83,10 @@ public class MainViewModel : ViewModelBase
         set
         {
             if (SetField(ref m_isCppWithHeaders, value))
+            {
                 Settings.Instance.IsCppWithHeaders = value;
+                InvalidatePreviewStats();
+            }
         }
     }
 
@@ -79,7 +96,10 @@ public class MainViewModel : ViewModelBase
         set
         {
             if (SetField(ref m_excludeImports, value))
+            {
                 Settings.Instance.ExcludeImports = value;
+                InvalidatePreviewStats();
+            }
         }
     }
 
@@ -89,7 +109,10 @@ public class MainViewModel : ViewModelBase
         set
         {
             if (SetField(ref m_excludeComments, value))
+            {
                 Settings.Instance.ExcludeComments = value;
+                InvalidatePreviewStats();
+            }
         }
     }
 
@@ -99,7 +122,10 @@ public class MainViewModel : ViewModelBase
         set
         {
             if (SetField(ref m_includeMarkdown, value))
+            {
                 Settings.Instance.IncludeMarkdown = value;
+                InvalidatePreviewStats();
+            }
         }
     }
 
@@ -109,8 +135,29 @@ public class MainViewModel : ViewModelBase
         set
         {
             if (SetField(ref m_useFullPaths, value))
+            {
                 Settings.Instance.UseFullPaths = value;
+                InvalidatePreviewStats();
+            }
         }
+    }
+
+    public int? PreviewFileCount
+    {
+        get => m_previewFileCount;
+        set => SetField(ref m_previewFileCount, value);
+    }
+
+    public long? PreviewFileSize
+    {
+        get => m_previewFileSize;
+        set => SetField(ref m_previewFileSize, value);
+    }
+
+    public bool IsGeneratingPreview
+    {
+        get => m_isGeneratingPreview;
+        set => SetField(ref m_isGeneratingPreview, value);
     }
 
     public async Task SelectRoot()
@@ -125,6 +172,9 @@ public class MainViewModel : ViewModelBase
     public MainViewModel(IDialogService dialogService = null)
     {
         m_dialogService = dialogService ?? DialogService.Instance;
+
+        m_folderSelectionConsolidator = new ActionConsolidator(RefreshPredictedSize, 2.0);
+        Root = new FolderTreeRoot(Settings.Instance.RootFolder);
     }
 
     public async Task RunIngest()
@@ -146,6 +196,25 @@ public class MainViewModel : ViewModelBase
         if (outputFile == null)
             return; // User cancelled.
 
+        var progress = new ProgressToken(true) { IsCancelSupported = true };
+        (int FileCount, long OutputBytes)? result;
+        using (m_dialogService.ShowBusy("Generating code...", progress))
+        {
+            var options = GetIngestOptions();
+            var ingester = new Ingester(options);
+            result = await Task.Run(() => ingester.Run(selectedFolders, outputFile, progress));
+        }
+        if (!result.HasValue)
+        {
+            m_dialogService.ShowMessage("Failed to generate code file.", "Please check your file permissions and try again.", MaterialIconKind.Error);
+            return;
+        }
+        
+        m_dialogService.ShowMessage("Code file generated successfully.", $"{result.Value.FileCount:N0} files produced {result.Value.OutputBytes.ToSize()} of output.");
+    }
+
+    private IngestOptions GetIngestOptions()
+    {
         var options = new IngestOptions
         {
             ExcludeImports = ExcludeImports,
@@ -168,20 +237,53 @@ public class MainViewModel : ViewModelBase
         
         if (IncludeMarkdown)
             options.FilePatterns.Add("*.md");
+        return options;
+    }
 
-        var progress = new ProgressToken(true) { IsCancelSupported = true };
-        (int FileCount, long OutputBytes)? result;
-        using (m_dialogService.ShowBusy("Generating code...", progress))
+    private void OnFolderSelectionChanged(object sender, EventArgs e) =>
+        InvalidatePreviewStats();
+
+    private void InvalidatePreviewStats() =>
+        m_folderSelectionConsolidator.Invoke();
+
+    private void RefreshPredictedSize()
+    {
+        m_backgroundRefreshProgress?.Cancel();
+        
+        var selectedFolders = Root.GetSelectedItems().ToArray();
+        if (selectedFolders.Length == 0)
         {
-            var ingester = new Ingester(options);
-            result = await Task.Run(() => ingester.Run(selectedFolders, outputFile, progress));
-        }
-        if (!result.HasValue)
-        {
-            m_dialogService.ShowMessage("Failed to generate code file.", "Please check your file permissions and try again.", MaterialIconKind.Error);
-            return;
+            PreviewFileCount = 0;
+            PreviewFileSize = 0;
+            return; // Nothing to do.
         }
         
-        m_dialogService.ShowMessage("Code file generated successfully.", $"{result.Value.FileCount:N0} files produced {result.Value.OutputBytes.ToSize()} of output.");
+        var options = GetIngestOptions();
+        if (options.FilePatterns.Count == 0)
+        {
+            PreviewFileCount = 0;
+            PreviewFileSize = 0;
+            return; // Nothing search.
+        }
+        
+        var ingester = new Ingester(options);
+        m_backgroundRefreshProgress = new ProgressToken(true);
+        
+        Task.Run(() =>
+        {
+            IsGeneratingPreview = true;
+            try
+            {
+                var result = ingester.Run(selectedFolders, progress: m_backgroundRefreshProgress);
+                if (!result.HasValue || m_backgroundRefreshProgress.CancelRequested)
+                    return;
+                PreviewFileCount = result.Value.FileCount;
+                PreviewFileSize = result.Value.OutputBytes;
+            }
+            finally
+            {
+                IsGeneratingPreview = false;
+            }
+        });
     }
 }

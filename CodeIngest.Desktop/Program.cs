@@ -1,6 +1,7 @@
 ﻿using Avalonia;
 using System;
 using System.Threading.Tasks;
+using CodeIngest.Desktop.Views;
 using CSharp.Core;
 
 namespace CodeIngest.Desktop;

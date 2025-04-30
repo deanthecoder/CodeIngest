@@ -8,13 +8,13 @@
 // about your modifications. Your contributions are valued!
 //
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
+
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using CodeIngest.Desktop.Views;
 using CSharp.Core.UI;
 
-namespace CodeIngest.Desktop;
+namespace CodeIngest.Desktop.Views;
 
 public class App : Application
 {

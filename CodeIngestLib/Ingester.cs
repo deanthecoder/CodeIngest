@@ -31,7 +31,7 @@ public class Ingester
         m_options = options;
     }
 
-    public (int FileCount, long OutputBytes)? Run(IEnumerable<DirectoryInfo> directories, FileInfo outputFile, ProgressToken progress = null)
+    public (int FileCount, long OutputBytes)? Run(IEnumerable<DirectoryInfo> directories, FileInfo outputFile = null, ProgressToken progress = null)
     {
         var didError = false;
         var sourceFiles = directories
@@ -65,8 +65,12 @@ public class Ingester
             return (0, 0);
         }
 
-        using (var fileStream = outputFile.Open(FileMode.Create))
-        using (var writer = new StreamWriter(fileStream, Encoding.UTF8))
+        // If caller isn't collecting output (Just wants size info), write output to a temp file.
+        using var tempOutputFile = new TempFile();
+        outputFile ??= tempOutputFile;
+        
+        using (var outputStream = (outputFile).Open(FileMode.Create))
+        using (var writer = new StreamWriter(outputStream, Encoding.UTF8))
         {
             writer.NewLine = "\n";
             writer.WriteLine("// CodeIngest - A CLI tool that merges and processes code files for GPT reviews.");
