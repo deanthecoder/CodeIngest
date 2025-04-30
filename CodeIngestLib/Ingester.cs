@@ -13,7 +13,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using CSharp.Core;
 
 namespace CodeIngestLib;
@@ -83,7 +82,7 @@ public class Ingester
                     progress.Progress = (int)(100.0 * (i + 1.0) / sourceFiles.Length); 
                 }
                 
-                using var reader = new StreamReader(sourceFile.OpenRead(), Encoding.UTF8);
+                using var reader = new StreamReader(sourceFile.FullName, Encoding.UTF8);
 
                 writer.WriteLine($"// File: {(m_options.UseFullPaths ? sourceFile.FullName : sourceFile.Name)}");
 
@@ -136,9 +135,18 @@ public class Ingester
         var commentIndex = line.IndexOf("//", StringComparison.Ordinal);
         if (commentIndex >= 0)
             line = line[..commentIndex];
+        
+        if (line.Contains('\t'))
+            line = line.Replace('\t', ' ');
+        if (!line.Contains(' '))
+            return line;
 
+        // Strip spaces around operators.
         foreach (var expr in SymbolsToCollapse)
-            line = line.Replace($"{expr} ", expr).Replace($" {expr}", expr);
+        {
+            if (line.Contains(expr))
+                line = line.Replace($"{expr} ", expr).Replace($" {expr}", expr);
+        }
 
         while (line.Contains("  "))
             line = line.Replace("  ", " ");
