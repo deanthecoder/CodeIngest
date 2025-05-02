@@ -121,12 +121,15 @@ public class Ingester
             return false;
         var trimmed = s.Trim();
 
-        if (options.ExcludeImports && s.StartsWith("using") || s.StartsWith("#include") || s.StartsWith("#pragma") || trimmed.StartsWith("namespace"))
-            return false;
+        if (options.ExcludeImports)
+        {
+            if (trimmed.StartsWith("using") || trimmed.StartsWith("#include") || trimmed.StartsWith("#pragma") || trimmed.StartsWith("namespace") || trimmed.StartsWith("import") || trimmed.StartsWith("from "))
+                return false;
+        }
 
         if (options.StripComments)
         {
-            if (trimmed.StartsWith("//"))
+            if (trimmed.StartsWith("//") || trimmed.StartsWith("# "))
                 return false;
             if (trimmed.StartsWith("/*") && trimmed.EndsWith("*/"))
                 return false;

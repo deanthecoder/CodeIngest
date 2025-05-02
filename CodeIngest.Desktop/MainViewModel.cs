@@ -34,6 +34,8 @@ public class MainViewModel : ViewModelBase
     private bool m_excludeImports = Settings.Instance.ExcludeImports;
     private bool m_useFullPaths = Settings.Instance.UseFullPaths;
     private bool m_excludeComments = Settings.Instance.ExcludeComments;
+    private bool m_isPython = Settings.Instance.IsPython;
+    private bool m_isJavaScript = Settings.Instance.IsJavaScript;
     private int? m_previewFileCount;
     private long? m_previewFileSize;
     private bool m_isGeneratingPreview;
@@ -85,6 +87,32 @@ public class MainViewModel : ViewModelBase
             if (SetField(ref m_isCppWithHeaders, value))
             {
                 Settings.Instance.IsCppWithHeaders = value;
+                InvalidatePreviewStats();
+            }
+        }
+    }
+
+    public bool IsPython
+    {
+        get => m_isPython;
+        set
+        {
+            if (SetField(ref m_isPython, value))
+            {
+                Settings.Instance.IsPython = value;
+                InvalidatePreviewStats();
+            }
+        }
+    }
+
+    public bool IsJavaScript
+    {
+        get => m_isJavaScript;
+        set
+        {
+            if (SetField(ref m_isJavaScript, value))
+            {
+                Settings.Instance.IsJavaScript = value;
                 InvalidatePreviewStats();
             }
         }
@@ -197,6 +225,10 @@ public class MainViewModel : ViewModelBase
             filterExtensions = [".cpp"];
         else if (IsCppWithHeaders)
             filterExtensions = [".cpp", ".h"];
+        else if (IsPython)
+            filterExtensions = [".py"];
+        else if (IsJavaScript)
+            filterExtensions = [".js"];
         else
             filterExtensions = [".cs"];
         

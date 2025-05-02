@@ -97,21 +97,26 @@
                 <Border Grid.Row="1" BorderThickness="1" Margin="0,16,0,0">
                     <StackPanel>
                         <!-- ReSharper disable once Xaml.StyleClassNotFound -->
-                        <TextBlock Text="Options" Classes="Overline" Margin="4"/>
-                        <StackPanel Margin="8">
-                            <CheckBox Content="Export Full Paths" IsChecked="{Binding UseFullPaths}"/>
+                        <TextBlock Text="Languages" Classes="Overline" Margin="4"/>
+                        <StackPanel Margin="8,4">
+                            <RadioButton Content="C#" IsChecked="{Binding IsCSharp}"/>
+                            <RadioButton Content="C/C++ (No Headers)" IsChecked="{Binding IsCppNoHeaders}" Margin="0,4,0,0"/>
+                            <RadioButton Content="C/C++ (With Headers)" IsChecked="{Binding IsCppWithHeaders}" Margin="0,4,0,0"/>
+                            <RadioButton Content="Python" IsChecked="{Binding IsPython}" Margin="0,4,0,0"/>
+                            <RadioButton Content="JavaScript" IsChecked="{Binding IsJavaScript}" Margin="0,4,0,0"/>
+                        </StackPanel>
 
-                            <RadioButton Content="C#" Margin="0,16,0,0" IsChecked="{Binding IsCSharp}"/>
-                            <RadioButton Content="C/C++ (No Headers)" IsChecked="{Binding IsCppNoHeaders}" Margin="0,4"/>
-                            <RadioButton Content="C/C++ (With Headers)" IsChecked="{Binding IsCppWithHeaders}" />
-
-                            <CheckBox Content="Exclude Imports" Margin="0,16,0,0"
+                        <TextBlock Text="Options" Classes="Overline" Margin="4,16,4,4"/>
+                        <StackPanel Margin="8,4">
+                            <CheckBox Content="Exclude Imports"
                                       ToolTip.Tip="Remove using/#include/etc statements from the output."
                                       IsChecked="{Binding ExcludeImports}" />
-                            <CheckBox Content="Exclude comments" Margin="0,4"
+                            <CheckBox Content="Exclude comments" Margin="0,4,0,0"
                                       ToolTip.Tip="Remove // and /*-style comments from the output."
                                       IsChecked="{Binding ExcludeComments}" />
-                            <CheckBox Content="Include Markdown"
+                            <CheckBox Content="Include Full Paths" Margin="0,4,0,0"
+                                      IsChecked="{Binding UseFullPaths}"/>
+                            <CheckBox Content="Include Markdown" Margin="0,4,0,0"
                                       ToolTip.Tip="Include .md files in the output."
                                       IsChecked="{Binding IncludeMarkdown}" />
                         </StackPanel>

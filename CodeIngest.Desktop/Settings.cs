@@ -67,12 +67,26 @@ public class Settings : UserSettingsBase
         set => Set(value);
     }
 
+    public bool IsPython
+    {
+        get => Get<bool>();
+        set => Set(value);
+    }
+
+    public bool IsJavaScript
+    {
+        get => Get<bool>();
+        set => Set(value);
+    }
+
     protected override void ApplyDefaults()
     {
         RootFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToDir();
         IsCSharp = true;
         IsCppNoHeaders = false;
         IsCppWithHeaders = false;
+        IsPython = false;
+        IsJavaScript = false;
         ExcludeImports = true;
         ExcludeComments = true;
         IncludeMarkdown = false;
