@@ -153,12 +153,15 @@ public class MainViewModel : ViewModelBase
         get => m_previewFileSize;
         set
         {
-            if (SetField(ref m_previewFileSize, value))
-                OnPropertyChanged(nameof(PreviewTokenCount));
+            if (!SetField(ref m_previewFileSize, value))
+                return;
+            OnPropertyChanged(nameof(PreviewTokenCount));
+            OnPropertyChanged(nameof(PreviewTokenRisk));
         }
     }
 
     public int PreviewTokenCount => (int)((PreviewFileSize ?? 0) / 3.8);
+    public double PreviewTokenRisk => (double)PreviewTokenCount / 128_000;
 
     public bool IsGeneratingPreview
     {
@@ -179,7 +182,7 @@ public class MainViewModel : ViewModelBase
     {
         m_dialogService = dialogService ?? DialogService.Instance;
 
-        m_folderSelectionConsolidator = new ActionConsolidator(RefreshPredictedSize, 2.0);
+        m_folderSelectionConsolidator = new ActionConsolidator(() => _ = RefreshPredictedSizeAsync(), 2.0);
         Root = new FolderTreeRoot(Settings.Instance.RootFolder);
     }
 
@@ -257,7 +260,7 @@ public class MainViewModel : ViewModelBase
         m_folderSelectionConsolidator.Invoke();
     }
 
-    private void RefreshPredictedSize()
+    private async Task RefreshPredictedSizeAsync()
     {
         try
         {
@@ -282,7 +285,7 @@ public class MainViewModel : ViewModelBase
             var ingester = new Ingester(options);
             m_backgroundRefreshProgress = new ProgressToken(isCancelSupported: true);
         
-            Task.Run(() =>
+            await Task.Run(() =>
             {
                 var result = ingester.Run(selectedFolders, progress: m_backgroundRefreshProgress);
                 if (!result.HasValue || m_backgroundRefreshProgress.CancelRequested)

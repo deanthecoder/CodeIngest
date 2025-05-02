@@ -29,6 +29,7 @@
 
     <Application.Resources>
         <converters:BytesToUiStringConverter x:Key="BytesToUiStringConverter" />
+        <converters:RiskToBrushConverter x:Key="RiskToBrushConverter" />
     </Application.Resources>
     
     <NativeMenu.Menu>

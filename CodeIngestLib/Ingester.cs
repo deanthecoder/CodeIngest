@@ -14,6 +14,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using CSharp.Core;
+using CSharp.Core.Extensions;
 
 namespace CodeIngestLib;
 
@@ -35,13 +36,13 @@ public class Ingester
     {
         var didError = false;
         var sourceFiles = directories
-            .Where(d => d.Exists)
+            .Where(d => d.Exists() && d.IsAccessible())
             .AsParallel()
             .SelectMany(d => m_options.FilePatterns.SelectMany(p =>
             {
                 try
                 {
-                    return d.GetFiles(p, SearchOption.AllDirectories);
+                    return d.TryGetFiles(p, SearchOption.AllDirectories);
                 }
                 catch (Exception ex)
                 {

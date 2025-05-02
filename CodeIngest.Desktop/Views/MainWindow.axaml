@@ -70,7 +70,7 @@
                                    IsVisible="{Binding PreviewFileSize, Converter={x:Static ObjectConverters.IsNull}}" />
                         <StackPanel Grid.Column="4" Grid.Row="0" Orientation="Horizontal"
                                     IsVisible="{Binding PreviewFileSize, Converter={x:Static ObjectConverters.IsNotNull}}">
-                            <TextBlock Text="{Binding PreviewTokenCount, StringFormat=N0}"/>
+                            <TextBlock Text="{Binding PreviewTokenCount, StringFormat=N0}" Foreground="{Binding PreviewTokenRisk, Converter={StaticResource RiskToBrushConverter}}"/>
                             <TextBlock Text="tokens"/>
                         </StackPanel>
 
