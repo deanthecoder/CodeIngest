@@ -28,8 +28,7 @@ public class MainViewModel : ViewModelBase
     private FolderTreeRoot m_root;
     private ProgressToken m_backgroundRefreshProgress;
     private bool m_isCSharp = Settings.Instance.IsCSharp;
-    private bool m_isCppNoHeaders = Settings.Instance.IsCppNoHeaders;
-    private bool m_isCppWithHeaders = Settings.Instance.IsCppWithHeaders;
+    private bool m_isCpp = Settings.Instance.IsCpp;
     private bool m_includeMarkdown = Settings.Instance.IncludeMarkdown;
     private bool m_excludeImports = Settings.Instance.ExcludeImports;
     private bool m_useFullPaths = Settings.Instance.UseFullPaths;
@@ -66,32 +65,19 @@ public class MainViewModel : ViewModelBase
         }
     }
 
-    public bool IsCppNoHeaders
+    public bool IsCpp
     {
-        get => m_isCppNoHeaders;
+        get => m_isCpp;
         set
         {
-            if (SetField(ref m_isCppNoHeaders, value))
+            if (SetField(ref m_isCpp, value))
             {
-                Settings.Instance.IsCppNoHeaders = value;
+                Settings.Instance.IsCpp = value;
                 InvalidatePreviewStats();
             }
         }
     }
-
-    public bool IsCppWithHeaders
-    {
-        get => m_isCppWithHeaders;
-        set
-        {
-            if (SetField(ref m_isCppWithHeaders, value))
-            {
-                Settings.Instance.IsCppWithHeaders = value;
-                InvalidatePreviewStats();
-            }
-        }
-    }
-
+    
     public bool IsPython
     {
         get => m_isPython;
@@ -221,9 +207,9 @@ public class MainViewModel : ViewModelBase
             return; // Nothing to do.
 
         string[] filterExtensions;
-        if (IsCppNoHeaders)
+        if (IsCpp)
             filterExtensions = [".cpp"];
-        else if (IsCppWithHeaders)
+        else if (IsCpp)
             filterExtensions = [".cpp", ".h"];
         else if (IsPython)
             filterExtensions = [".py"];
@@ -267,12 +253,10 @@ public class MainViewModel : ViewModelBase
         if (IsCSharp)
         {
             options.FilePatterns.Add("*.cs");
-        } else if (IsCppNoHeaders)
+        } else if (IsCpp)
         {
-            options.FilePatterns.Add("*.cpp");
-        } else if (IsCppWithHeaders)
-        {
-            options.FilePatterns.Add("*.h");
+            if (!ExcludeImports)
+                options.FilePatterns.Add("*.h");
             options.FilePatterns.Add("*.cpp");
         }
         

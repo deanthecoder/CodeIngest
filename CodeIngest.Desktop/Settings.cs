@@ -31,13 +31,7 @@ public class Settings : UserSettingsBase
         set => Set(value);
     }
     
-    public bool IsCppNoHeaders
-    {
-        get => Get<bool>();
-        set => Set(value);
-    }
-    
-    public bool IsCppWithHeaders
+    public bool IsCpp
     {
         get => Get<bool>();
         set => Set(value);
@@ -83,8 +77,7 @@ public class Settings : UserSettingsBase
     {
         RootFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToDir();
         IsCSharp = true;
-        IsCppNoHeaders = false;
-        IsCppWithHeaders = false;
+        IsCpp = false;
         IsPython = false;
         IsJavaScript = false;
         ExcludeImports = true;

@@ -100,12 +100,12 @@
                         <TextBlock Text="Languages" Classes="Overline" Margin="4"/>
                         <StackPanel Margin="8,4">
                             <RadioButton Content="C#" IsChecked="{Binding IsCSharp}"/>
-                            <RadioButton Content="C/C++ (No Headers)" IsChecked="{Binding IsCppNoHeaders}" Margin="0,4,0,0"/>
-                            <RadioButton Content="C/C++ (With Headers)" IsChecked="{Binding IsCppWithHeaders}" Margin="0,4,0,0"/>
+                            <RadioButton Content="C/C++" IsChecked="{Binding IsCpp}" Margin="0,4,0,0"/>
                             <RadioButton Content="Python" IsChecked="{Binding IsPython}" Margin="0,4,0,0"/>
                             <RadioButton Content="JavaScript" IsChecked="{Binding IsJavaScript}" Margin="0,4,0,0"/>
                         </StackPanel>
 
+                        <!-- ReSharper disable once Xaml.StyleClassNotFound -->
                         <TextBlock Text="Options" Classes="Overline" Margin="4,16,4,4"/>
                         <StackPanel Margin="8,4">
                             <CheckBox Content="Exclude Imports"
