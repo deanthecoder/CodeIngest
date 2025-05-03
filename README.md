@@ -1,6 +1,8 @@
 [![Twitter URL](https://img.shields.io/twitter/url/https/twitter.com/deanthecoder.svg?style=social&label=Follow%20%40deanthecoder)](https://twitter.com/deanthecoder)
-# CodeIngest
-**CodeIngest** is a cross-platform C# tool that recursively scans a directory of source files, filters out noise (comments, using statements, namespaces), and generates a flattened source dump designed for GPT code review or large-scale source inspection.
+# Code Ingest
+**Code Ingest** creates a single flattened source file from your codebase, optimized for ChatGPT and other AI models to review.
+
+It scans entire folders of source code, strips out distractions like comments, import statements, and namespace wrappers, and outputs a streamlined and readable version suitable for large-scale analysis or AI understanding.
 ![CodeIngest Screenshot](img/app.png)
 
 ## Features
