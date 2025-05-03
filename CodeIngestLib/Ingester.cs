@@ -22,10 +22,15 @@ public class Ingester
 {
     private readonly IngestOptions m_options;
 
-    private static string[] SymbolsToCollapse { get; } = new[]
-    {
+    private static string[] SymbolsToCollapse { get; } =
+    [
         "<", "<=", "=", "==", "=>", ">", "!=", "(", ")", "{", "}", "[", "]", "-", "+", "*", "&", "%", "/", "<<", ">>", ";", ",", "||", "|", ":", "?", "|"
-    };
+    ];
+
+    private static string[] FilesToSkip { get; } =
+    [
+        "resx", ".g.", ".designer.", "\\obj\\", "/obj/", "\\bin\\", "/bin/", "assemblyinfo.cs", "/.", "\\."
+    ];
     
     public Ingester(IngestOptions options)
     {
@@ -70,7 +75,7 @@ public class Ingester
         using var tempOutputFile = new TempFile();
         outputFile ??= tempOutputFile;
         
-        using (var outputStream = (outputFile).Open(FileMode.Create))
+        using (var outputStream = outputFile.Open(FileMode.Create))
         using (var writer = new StreamWriter(outputStream, Encoding.UTF8))
         {
             writer.NewLine = "\n";
@@ -86,23 +91,22 @@ public class Ingester
                         break; // Caller requested cancellation.
                     progress.Progress = (int)(100.0 * (i + 1.0) / sourceFiles.Length); 
                 }
-                
-                using var reader = new StreamReader(sourceFile.FullName, Encoding.UTF8);
-
-                writer.WriteLine($"// File: {(m_options.UseFullPaths ? sourceFile.FullName : sourceFile.Name)}");
-
-                var lineNumber = 1;
-                string line;
-                while ((line = reader.ReadLine()) != null)
-                {
-                    if (ShouldIncludeSourceLine(line, m_options))
-                        writer.WriteLine($"{lineNumber.ToString()}|{GetCodeLine(line).Trim()}");
-
-                    lineNumber++;
-                }
 
                 if (m_options.Verbose)
-                    Logger.Instance.Warn($"{sourceFile.FullName} processed ({lineNumber - 1:N0} lines)");
+                    Logger.Instance.Info($"Processing: {sourceFile.FullName}");
+
+                using var reader = new StreamReader(sourceFile.FullName, Encoding.UTF8);
+                writer.WriteLine($"// File: {(m_options.UseFullPaths ? sourceFile.FullName : sourceFile.Name)}");
+
+                var iterator = new CodeLineIterator(reader, m_options.StripComments, m_options.ExcludeImports);
+                iterator
+                    .GetLines()
+                    .ForEach((line, lineIndex) =>
+                    {
+                        var s = GetCodeLine(line);
+                        if (!string.IsNullOrWhiteSpace(s))
+                            writer.WriteLine($"{lineIndex + 1}|{s}");
+                    });
             }
         }
 
@@ -110,40 +114,11 @@ public class Ingester
     }
 
     private static bool ShouldSkipFile(FileInfo f) =>
-        new[]
-        {
-            "resx", ".g.", ".designer.", "\\obj\\", "/obj/", "\\bin\\", "/bin/", "assemblyinfo.cs", "/.", "\\."
-        }.Any(o => f.FullName.Contains(o, StringComparison.OrdinalIgnoreCase));
-
-    private static bool ShouldIncludeSourceLine(string s, IngestOptions options)
-    {
-        if (string.IsNullOrWhiteSpace(s))
-            return false;
-        var trimmed = s.Trim();
-
-        if (options.ExcludeImports)
-        {
-            if (trimmed.StartsWith("using") || trimmed.StartsWith("#include") || trimmed.StartsWith("#pragma") || trimmed.StartsWith("namespace") || trimmed.StartsWith("import") || trimmed.StartsWith("from "))
-                return false;
-        }
-
-        if (options.StripComments)
-        {
-            if (trimmed.StartsWith("//") || trimmed.StartsWith("# "))
-                return false;
-            if (trimmed.StartsWith("/*") && trimmed.EndsWith("*/"))
-                return false;
-        }
-        
-        return true;
-    }
+        FilesToSkip.Any(o => f.FullName.Contains(o, StringComparison.OrdinalIgnoreCase));
 
     private static string GetCodeLine(string line)
     {
-        var commentIndex = line.IndexOf("//", StringComparison.Ordinal);
-        if (commentIndex >= 0)
-            line = line[..commentIndex];
-        
+        // De-tab.
         if (line.Contains('\t'))
             line = line.Replace('\t', ' ');
         if (!line.Contains(' '))
