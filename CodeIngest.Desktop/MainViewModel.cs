@@ -13,10 +13,10 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using CodeIngestLib;
-using CSharp.Core;
-using CSharp.Core.Extensions;
-using CSharp.Core.UI;
-using CSharp.Core.ViewModels;
+using DTC.Core;
+using DTC.Core.Extensions;
+using DTC.Core.UI;
+using DTC.Core.ViewModels;
 using Material.Icons;
 
 namespace CodeIngest.Desktop;

@@ -14,7 +14,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using CodeIngestLib;
-using CSharp.Core.Extensions;
+using DTC.Core.Extensions;
 
 namespace CodeIngestCmd;
 

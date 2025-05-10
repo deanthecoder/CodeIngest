@@ -11,6 +11,9 @@
         <AssemblyName>CodeIngest</AssemblyName>
         <ApplicationTitle>Code Ingest</ApplicationTitle>
     </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DebugType>none</DebugType>
+    </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Avalonia" Version="11.1.3" />
@@ -27,7 +30,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\CodeIngestLib\CodeIngestLib.csproj" />
-      <ProjectReference Include="..\DTC.Core\CSharp.Core\CSharp.Core.csproj" />
+      <ProjectReference Include="..\DTC.Core\DTC.Core\DTC.Core.csproj" />
     </ItemGroup>
 
     <ItemGroup>

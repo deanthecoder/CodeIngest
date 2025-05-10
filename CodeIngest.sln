@@ -4,7 +4,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeIngestCmd", "CodeIngest
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeIngestLib", "CodeIngestLib\CodeIngestLib.csproj", "{CCD3D5FD-483B-4F3B-B223-63436F9F91C2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharp.Core", "DTC.Core\CSharp.Core\CSharp.Core.csproj", "{A7CC14FB-55DC-437A-B589-1940400CA3EE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DTC.Core", "DTC.Core\DTC.Core\DTC.Core.csproj", "{A7CC14FB-55DC-437A-B589-1940400CA3EE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeIngest.Desktop", "CodeIngest.Desktop\CodeIngest.Desktop.csproj", "{C615B413-6B43-42B4-8FAB-B5E2E8CD09BD}"
 EndProject

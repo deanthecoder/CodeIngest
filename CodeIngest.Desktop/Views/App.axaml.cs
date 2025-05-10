@@ -12,7 +12,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using CSharp.Core.UI;
+using DTC.Core.UI;
 
 namespace CodeIngest.Desktop.Views;
 

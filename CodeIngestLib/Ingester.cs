@@ -13,8 +13,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using CSharp.Core;
-using CSharp.Core.Extensions;
+using DTC.Core;
+using DTC.Core.Extensions;
 
 namespace CodeIngestLib;
 
@@ -98,6 +98,7 @@ public class Ingester
                 using var reader = new StreamReader(sourceFile.FullName, Encoding.UTF8);
                 writer.WriteLine($"// File: {(m_options.UseFullPaths ? sourceFile.FullName : sourceFile.Name)}");
 
+                var localWriter = writer;
                 var iterator = new CodeLineIterator(reader, m_options.StripComments, m_options.ExcludeImports);
                 iterator
                     .GetLines()
@@ -105,7 +106,7 @@ public class Ingester
                     {
                         var s = GetCodeLine(line);
                         if (!string.IsNullOrWhiteSpace(s))
-                            writer.WriteLine($"{lineIndex + 1}|{s}");
+                            localWriter.WriteLine($"{lineIndex + 1}|{s}");
                     });
             }
         }

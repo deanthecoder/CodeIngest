@@ -10,8 +10,8 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 using System;
 using System.IO;
-using CSharp.Core.Extensions;
-using CSharp.Core.Settings;
+using DTC.Core.Extensions;
+using DTC.Core.Settings;
 
 namespace CodeIngest.Desktop;
 

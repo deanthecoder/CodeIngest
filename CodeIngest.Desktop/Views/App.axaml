@@ -4,7 +4,7 @@
              xmlns:themes="clr-namespace:Material.Styles.Themes;assembly=Material.Styles"
              xmlns:avalonia="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              xmlns:viewModels="clr-namespace:CodeIngest.Desktop"
-             xmlns:converters="clr-namespace:CSharp.Core.Converters;assembly=CSharp.Core"
+             xmlns:converters="clr-namespace:DTC.Core.Converters;assembly=DTC.Core"
              x:Class="CodeIngest.Desktop.Views.App"
              RequestedThemeVariant="Default"
              Name="Code Ingest"

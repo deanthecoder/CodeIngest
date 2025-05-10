@@ -12,8 +12,8 @@ using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
-using CSharp.Core.Extensions;
-using CSharp.Core.UI;
+using DTC.Core.Extensions;
+using DTC.Core.UI;
 
 namespace CodeIngest.Desktop.Views;
 

@@ -11,9 +11,9 @@
 using System.Windows.Input;
 using Avalonia;
 using CodeIngest.Desktop.Views;
-using CSharp.Core.Commands;
-using CSharp.Core.Extensions;
-using CSharp.Core.ViewModels;
+using DTC.Core.Commands;
+using DTC.Core.Extensions;
+using DTC.Core.ViewModels;
 
 namespace CodeIngest.Desktop;
 

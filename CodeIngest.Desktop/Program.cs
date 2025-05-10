@@ -2,7 +2,7 @@
 using System;
 using System.Threading.Tasks;
 using CodeIngest.Desktop.Views;
-using CSharp.Core;
+using DTC.Core;
 
 namespace CodeIngest.Desktop;
 
