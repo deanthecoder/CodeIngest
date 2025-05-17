@@ -49,12 +49,6 @@ public class Settings : UserSettingsBase
         set => Set(value);
     }
     
-    public bool IncludeMarkdown
-    {
-        get => Get<bool>();
-        set => Set(value);
-    }
-    
     public bool UseFullPaths
     {
         get => Get<bool>();
@@ -73,6 +67,18 @@ public class Settings : UserSettingsBase
         set => Set(value);
     }
 
+    public bool IsCustomFilter
+    {
+        get => Get<bool>();
+        set => Set(value);
+    }
+
+    public string CustomFileFilter
+    {
+        get => Get<string>();
+        set => Set(value);
+    }
+
     protected override void ApplyDefaults()
     {
         RootFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments).ToDir();
@@ -80,9 +86,10 @@ public class Settings : UserSettingsBase
         IsCpp = false;
         IsPython = false;
         IsJavaScript = false;
+        IsCustomFilter = false;
+        CustomFileFilter = "*.cs*;*.md;*.resx";
         ExcludeImports = true;
         ExcludeComments = true;
-        IncludeMarkdown = false;
         UseFullPaths = false;
     }
 }

@@ -10,6 +10,7 @@
 // THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND.
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CodeIngestLib;
@@ -29,12 +30,13 @@ public class MainViewModel : ViewModelBase
     private ProgressToken m_backgroundRefreshProgress;
     private bool m_isCSharp = Settings.Instance.IsCSharp;
     private bool m_isCpp = Settings.Instance.IsCpp;
-    private bool m_includeMarkdown = Settings.Instance.IncludeMarkdown;
+    private bool m_isPython = Settings.Instance.IsPython;
+    private bool m_isJavaScript = Settings.Instance.IsJavaScript;
+    private bool m_isCustomFilter = Settings.Instance.IsCustomFilter;
     private bool m_excludeImports = Settings.Instance.ExcludeImports;
     private bool m_useFullPaths = Settings.Instance.UseFullPaths;
     private bool m_excludeComments = Settings.Instance.ExcludeComments;
-    private bool m_isPython = Settings.Instance.IsPython;
-    private bool m_isJavaScript = Settings.Instance.IsJavaScript;
+    private string m_customFileFilter = Settings.Instance.CustomFileFilter;
     private int? m_previewFileCount;
     private long? m_previewFileSize;
     private bool m_isGeneratingPreview;
@@ -57,11 +59,10 @@ public class MainViewModel : ViewModelBase
         get => m_isCSharp;
         set
         {
-            if (SetField(ref m_isCSharp, value))
-            {
-                Settings.Instance.IsCSharp = value;
-                InvalidatePreviewStats();
-            }
+            if (!SetField(ref m_isCSharp, value))
+                return;
+            Settings.Instance.IsCSharp = value;
+            InvalidatePreviewStats();
         }
     }
 
@@ -70,11 +71,10 @@ public class MainViewModel : ViewModelBase
         get => m_isCpp;
         set
         {
-            if (SetField(ref m_isCpp, value))
-            {
-                Settings.Instance.IsCpp = value;
-                InvalidatePreviewStats();
-            }
+            if (!SetField(ref m_isCpp, value))
+                return;
+            Settings.Instance.IsCpp = value;
+            InvalidatePreviewStats();
         }
     }
     
@@ -83,11 +83,10 @@ public class MainViewModel : ViewModelBase
         get => m_isPython;
         set
         {
-            if (SetField(ref m_isPython, value))
-            {
-                Settings.Instance.IsPython = value;
-                InvalidatePreviewStats();
-            }
+            if (!SetField(ref m_isPython, value))
+                return;
+            Settings.Instance.IsPython = value;
+            InvalidatePreviewStats();
         }
     }
 
@@ -96,11 +95,34 @@ public class MainViewModel : ViewModelBase
         get => m_isJavaScript;
         set
         {
-            if (SetField(ref m_isJavaScript, value))
-            {
-                Settings.Instance.IsJavaScript = value;
-                InvalidatePreviewStats();
-            }
+            if (!SetField(ref m_isJavaScript, value))
+                return;
+            Settings.Instance.IsJavaScript = value;
+            InvalidatePreviewStats();
+        }
+    }
+    
+    public bool IsCustomFilter
+    {
+        get => m_isCustomFilter;
+        set
+        {
+            if (!SetField(ref m_isCustomFilter, value))
+                return;
+            Settings.Instance.IsCustomFilter = value;
+            InvalidatePreviewStats();
+        }
+    }
+
+    public string CustomFileFilter
+    {
+        get => m_customFileFilter.StringOrDefault("*.*");
+        set
+        {
+            if (!SetField(ref m_customFileFilter, value))
+                return;
+            Settings.Instance.CustomFileFilter = value;
+            InvalidatePreviewStats();
         }
     }
 
@@ -109,11 +131,10 @@ public class MainViewModel : ViewModelBase
         get => m_excludeImports;
         set
         {
-            if (SetField(ref m_excludeImports, value))
-            {
-                Settings.Instance.ExcludeImports = value;
-                InvalidatePreviewStats();
-            }
+            if (!SetField(ref m_excludeImports, value))
+                return;
+            Settings.Instance.ExcludeImports = value;
+            InvalidatePreviewStats();
         }
     }
 
@@ -122,24 +143,10 @@ public class MainViewModel : ViewModelBase
         get => m_excludeComments;
         set
         {
-            if (SetField(ref m_excludeComments, value))
-            {
-                Settings.Instance.ExcludeComments = value;
-                InvalidatePreviewStats();
-            }
-        }
-    }
-
-    public bool IncludeMarkdown
-    {
-        get => m_includeMarkdown;
-        set
-        {
-            if (SetField(ref m_includeMarkdown, value))
-            {
-                Settings.Instance.IncludeMarkdown = value;
-                InvalidatePreviewStats();
-            }
+            if (!SetField(ref m_excludeComments, value))
+                return;
+            Settings.Instance.ExcludeComments = value;
+            InvalidatePreviewStats();
         }
     }
 
@@ -148,11 +155,10 @@ public class MainViewModel : ViewModelBase
         get => m_useFullPaths;
         set
         {
-            if (SetField(ref m_useFullPaths, value))
-            {
-                Settings.Instance.UseFullPaths = value;
-                InvalidatePreviewStats();
-            }
+            if (!SetField(ref m_useFullPaths, value))
+                return;
+            Settings.Instance.UseFullPaths = value;
+            InvalidatePreviewStats();
         }
     }
 
@@ -206,20 +212,7 @@ public class MainViewModel : ViewModelBase
         if (selectedFolders.Length == 0)
             return; // Nothing to do.
 
-        string[] filterExtensions;
-        if (IsCpp)
-            filterExtensions = [".cpp"];
-        else if (IsCpp)
-            filterExtensions = [".cpp", ".h"];
-        else if (IsPython)
-            filterExtensions = [".py"];
-        else if (IsJavaScript)
-            filterExtensions = [".js"];
-        else
-            filterExtensions = [".cs"];
-        
-        var nameSuggestion = selectedFolders[0].Name + "_Ingested";
-        var outputFile = await m_dialogService.ShowFileSaveAsync("Save output file as...", nameSuggestion, "Code File", filterExtensions);
+        var outputFile = await PromptForOutputFile(selectedFolders);
         if (outputFile == null)
             return; // User cancelled.
 
@@ -240,6 +233,25 @@ public class MainViewModel : ViewModelBase
         m_dialogService.ShowMessage("Code file generated successfully.", $"{result.Value.FileCount:N0} files produced {result.Value.OutputBytes.ToSize()} of output.");
     }
 
+    private async Task<FileInfo> PromptForOutputFile(DirectoryInfo[] selectedFolders)
+    {
+        string[] saveFilter;
+        if (IsCpp)
+            saveFilter = [".cpp"];
+        else if (IsPython)
+            saveFilter = [".py"];
+        else if (IsJavaScript)
+            saveFilter = [".js"];
+        else if (IsCustomFilter)
+            saveFilter = [".txt"];
+        else
+            saveFilter = [".cs"];
+        
+        var nameSuggestion = selectedFolders[0].Name + "_Ingested";
+        var outputFile = await m_dialogService.ShowFileSaveAsync("Save output file as...", nameSuggestion, "Code File", saveFilter);
+        return outputFile;
+    }
+
     private IngestOptions GetIngestOptions()
     {
         var options = new IngestOptions
@@ -258,13 +270,39 @@ public class MainViewModel : ViewModelBase
             if (!ExcludeImports)
                 options.FilePatterns.Add("*.h");
             options.FilePatterns.Add("*.cpp");
+            options.FilePatterns.Add("*.c");
+        } else if (m_isJavaScript)
+        {
+            options.FilePatterns.Add("*.js");
+        } else if (IsPython)
+        {
+            options.FilePatterns.Add("*.py");
+        } else if (IsCustomFilter)
+        {
+            var filters = CustomFileFilter.StringOrDefault("*.*").Split(';').Select(o => o.Trim()).Where(IsValidFileFilter).ToArray();
+            options.FilePatterns.AddRange(filters);
         }
         
-        if (IncludeMarkdown)
-            options.FilePatterns.Add("*.md");
         return options;
     }
 
+    private static bool IsValidFileFilter(string filter)
+    {
+        if (string.IsNullOrWhiteSpace(filter))
+            return false;
+
+        // Disallow spaces
+        if (filter.Contains(' '))
+            return false;
+
+        // Disallowed characters in file names (excluding * and ? which are valid in wildcards)
+        if (filter.IndexOfAny((char[])['<', '>', ':', '"', '/', '\\', '|']) >= 0)
+            return false;
+
+        // Must contain * and .
+        return filter.Contains('*') && filter.Contains('.');
+    }
+    
     private void OnFolderSelectionChanged(object sender, EventArgs e) =>
         InvalidatePreviewStats();
 
